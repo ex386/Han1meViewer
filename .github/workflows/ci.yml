@@ -7,6 +7,21 @@ on:
     branches: [ "main" ]
     paths-ignore:
       - "**.md"
+  workflow_dispatch:  # 添加手动触发
+    inputs:  # 可选：添加输入参数
+      release_notes:
+        description: 'Release Notes'
+        required: false
+        type: string
+        default: 'Manual build trigger'
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
 
 jobs:
   build:
@@ -42,7 +57,12 @@ jobs:
           mv keystore.jks $HOME/.android/keystore.jks
 
       - name: Build and sign APK with Gradle
-        run: ./gradlew assembleRelease
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_type }}" == "debug" ]; then
+            ./gradlew assembleDebug
+          else
+            ./gradlew assembleRelease
+          fi
         env:
           KEYSTORE_PASSWORD: ${{ secrets.YOUR_KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.YOUR_KEYSTORE_PASSWORD }}
@@ -53,5 +73,5 @@ jobs:
       - name: Upload APK Zip
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-${{ github.sha }}
-          path: app/build/outputs/apk/release/Han1meViewer-v*.apk
+          name: app-${{ github.event.inputs.build_type || 'release' }}-${{ github.sha }}
+          path: app/build/outputs/apk/${{ github.event.inputs.build_type || 'release' }}/Han1meViewer-v*.apk
