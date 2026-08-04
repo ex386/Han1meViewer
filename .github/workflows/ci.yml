@@ -34,7 +34,7 @@ jobs:
       - name: 添加 gradlew 执行权限
         run: chmod +x gradlew
 
-      - name: 创建 google-services.json
+      - name: 创建 google-services.json（支持所有包名变体）
         run: |
           mkdir -p app
           cat > app/google-services.json << 'EOF'
@@ -64,55 +64,12 @@ jobs:
                     "status": 1
                   }
                 }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          EOF
-          echo "✅ google-services.json 创建成功"
-          cat app/google-services.json
-
-      # 如果 Debug 构建使用不同的包名，需要额外处理
-      - name: 检查应用包名
-        run: |
-          echo "检查 app/build.gradle 中的包名配置..."
-          grep -r "applicationId" app/ || echo "未找到 applicationId 配置"
-
-      - name: 构建 APK
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_type }}" == "release" ]; then
-            echo "构建 Release APK"
-            ./gradlew assembleRelease
-          else
-            echo "构建 Debug APK"
-            ./gradlew assembleDebug
-          fi
-        env:
-          HA_GITHUB_TOKEN: ${{ secrets.HA_GITHUB_TOKEN }}
-          HA1_VERSION_SOURCE: 'ci'
-
-      - name: 上传 APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-${{ github.event.inputs.build_type || 'debug' }}
-          path: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn      # 创建空的 google-services.json 避免构建失败
-      - name: 创建 google-services.json
-        run: |
-          mkdir -p app
-          echo '{
-            "project_info": {
-              "project_number": "000000000000",
-              "project_id": "dummy-project"
-            },
-            "client": [
+              },
               {
                 "client_info": {
                   "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
                   "android_client_info": {
-                    "package_name": "com.example.app"
+                    "package_name": "com.yenaly.han1meviewer.debug"
                   }
                 },
                 "oauth_client": [],
@@ -131,16 +88,19 @@ jobs:
               }
             ],
             "configuration_version": "1"
-          }' > app/google-services.json
+          }
+          EOF
           echo "✅ google-services.json 创建成功"
+          echo "包含的包名:"
+          grep -o '"package_name": "[^"]*"' app/google-services.json
 
       - name: 构建 APK
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_type }}" == "release" ]; then
-            echo "构建 Release APK（使用 Debug 签名）"
+            echo "📦 构建 Release APK"
             ./gradlew assembleRelease
           else
-            echo "构建 Debug APK"
+            echo "📦 构建 Debug APK"
             ./gradlew assembleDebug
           fi
         env:
@@ -150,13 +110,22 @@ jobs:
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-${{ github.event.inputs.build_type || 'debug' }}-${{ github.sha }}
+          name: Han1meViewer-${{ github.event.inputs.build_type || 'debug' }}
           path: |
             app/build/outputs/apk/debug/*.apk
             app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
 
-      - name: 构建完成
+      - name: 显示构建信息
+        if: always()
         run: |
-          echo "🎉 APK 构建成功！"
-          echo "📱 下载路径在 Artifacts 中"
+          echo "==================== 构建信息 ===================="
+          if [ -f app/build/outputs/apk/debug/*.apk ]; then
+            echo "✅ Debug APK 已生成"
+            ls -lh app/build/outputs/apk/debug/
+          fi
+          if [ -f app/build/outputs/apk/release/*.apk ]; then
+            echo "✅ Release APK 已生成"
+            ls -lh app/build/outputs/apk/release/
+          fi
+          echo "=================================================="
