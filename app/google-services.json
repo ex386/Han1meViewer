@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "653665856786",
+    "project_id": "han1meviewer-6632b",
+    "storage_bucket": "han1meviewer-6632b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:653665856786:android:edb659aa1159623dd497cb",
+        "android_client_info": {
+          "package_name": "com.yenaly.han1meviewer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxNquJE7JITYJ1ddyLDsCPINte1cCcGSk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
